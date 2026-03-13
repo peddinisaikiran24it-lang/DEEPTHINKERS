@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Fields: uid, email, displayName, createdAt
+    //
+    // Collection: opportunities
+    // Fields: uid, company, role, eligibility, deadline, deadlineDate, link, sourceType, createdAt, safetyScore, safetyReasoning
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "peddinisaikiran.24.it@anits.edu.in" && request.auth.token.email_verified == true));
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.uid == request.auth.uid &&
+             data.email is string &&
+             data.email.size() < 100;
+    }
+
+    function isValidOpportunity(data) {
+      return data.keys().hasAll(['uid', 'company', 'role', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             data.company is string && data.company.size() > 0 && data.company.size() < 200 &&
+             data.role is string && data.role.size() > 0 && data.role.size() < 200 &&
+             data.createdAt is number &&
+             (!('deadlineDate' in data) || data.deadlineDate is string) &&
+             (!('link' in data) || data.link is string) &&
+             (!('safetyScore' in data) || data.safetyScore is number);
+    }
+
+    // Rules
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
+                    (!('role' in request.resource.data) || request.resource.data.role == resource.data.role || isAdmin());
+    }
+
+    match /opportunities/{oppId} {
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && 
+                    request.resource.data.uid == request.auth.uid && 
+                    isValidOpportunity(request.resource.data);
+      allow update: if isDocOwner() && 
+                    request.resource.data.uid == resource.data.uid &&
+                    isValidOpportunity(request.resource.data);
+      allow delete: if isDocOwner() || isAdmin();
+    }
+  }
+}

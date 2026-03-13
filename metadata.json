@@ -1,0 +1,5 @@
+{
+  "name": "OppTracker",
+  "description": "An AI-powered platform for students to track internship and job opportunities from scattered notifications and screenshots.",
+  "requestFramePermissions": []
+}

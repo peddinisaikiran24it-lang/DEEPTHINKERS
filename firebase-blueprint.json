@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user-specific settings and profile info.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Opportunity": {
+      "title": "Internship Opportunity",
+      "description": "Represents a tracked internship/job opportunity.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Owner of the opportunity" },
+        "company": { "type": "string" },
+        "role": { "type": "string" },
+        "eligibility": { "type": "string" },
+        "deadline": { "type": "string" },
+        "deadlineDate": { "type": "string" },
+        "link": { "type": "string" },
+        "sourceType": { "type": "string", "enum": ["screenshot", "text", "manual", "chat"] },
+        "createdAt": { "type": "number" },
+        "safetyScore": { "type": "number" },
+        "safetyReasoning": { "type": "string" }
+      },
+      "required": ["uid", "company", "role", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents"
+    },
+    "/opportunities/{oppId}": {
+      "schema": "Opportunity",
+      "description": "Collection of tracked opportunities"
+    }
+  }
+}
